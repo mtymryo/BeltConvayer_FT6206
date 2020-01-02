@@ -1,17 +1,19 @@
-//ベルトコンベア制御用のプログラムです。
-//Adafruit 2.8インチ TFTタッチシールド v2(静電容量方式)専用です。
-//https://www.switch-science.com/catalog/1864/
-//抵抗膜方式との違いに注意してください。
-//
-//[ライブラリ情報]
-//Adafruit_GFX
-//https://github.com/adafruit/Adafruit-GFX-Library
-//Adafruit_ILI9341
-//https://github.com/adafruit/Adafruit_ILI9341
-//Adafruit_FT6206
-//https://github.com/adafruit/Adafruit_FT6206_Library
-//MsTimer2
-//http://www.arduino.cc/playground/uploads/Main/MsTimer2.zip
+/*
+ベルトコンベア制御用のプログラムです。
+Adafruit 2.8インチ TFTタッチシールド v2(静電容量方式)専用です。
+https://www.switch-science.com/catalog/1864/
+抵抗膜方式との違いに注意してください。
+
+[ライブラリ情報]
+Adafruit_GFX
+https://github.com/adafruit/Adafruit-GFX-Library
+Adafruit_ILI9341
+https://github.com/adafruit/Adafruit_ILI9341
+Adafruit_FT6206
+https://github.com/adafruit/Adafruit_FT6206_Library
+MsTimer2
+http://www.arduino.cc/playground/uploads/Main/MsTimer2.zip
+*/
 
 #include <Adafruit_GFX.h>
 #include <SPI.h>
@@ -29,7 +31,7 @@ Adafruit_FT6206 ts = Adafruit_FT6206();
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 float interval = 0.00;
-float Record = 0.00;
+float Record = 0.00; // カウントダウン値
 int flag = 0;
 String menu = "";
 int inPin = 6;
@@ -68,6 +70,8 @@ float time02 = 0;
 #define FRAME_W tft.width()-FRAME_X*2
 #define FRAME_H 70
 
+/*
+カウントダウンのスタートボタンの座標は下記を使ってください。現在はINPUTをトリガにしているためコメントアウト致します。
 #define START_X 230
 #define START_Y FRAME_Y+9
 #define START_W 70
@@ -76,6 +80,7 @@ float time02 = 0;
 #define START_TEXTCOLOR_A ILI9341_WHITE
 #define START_CURSOR_X 5
 #define START_CURSOR_Y 17
+*/
 
 #define DECREASE_X FRAME_X
 #define DECREASE_Y FRAME_Y+FRAME_H+15
@@ -156,6 +161,7 @@ void makeTextBox(int x, int y, uint16_t textcolor, int textsize, String pr)
 
 void intervalPrint(float i)
 {
+  // EEPROM に現在の INTERVAL（アドレス0） を書き込み
   EEPROM.put(0,i);
   makeBtn(FRAME_X + 121, FRAME_Y + 19, 90, 30, ILI9341_WHITE, 0, 0, ILI9341_BLACK, 3, (String)i);
 }
@@ -180,8 +186,7 @@ void decreaseBtn()
     }
     interval = interval - 0.10;
     intervalPrint(interval);
-    //タイマーボタン操作時の反応速度を変更する場合はここ
-    delay(90);
+    delay(90); // タイマーボタン操作時の反応速度を変更する場合はここ
   }
 }
 
@@ -197,8 +202,7 @@ void increaseBtn()
     }
     interval = interval + 0.10;
     intervalPrint(interval);
-    //タイマーボタン操作時の反応速度を変更する場合はここ    
-    delay(90);
+    delay(90); // タイマーボタン操作時の反応速度を変更する場合はここ
   }
 }
 
@@ -294,7 +298,8 @@ void mode(String a)
     makeBtn(INCREASE_X, INCREASE_Y, INCREASE_W, INCREASE_H, INCREASE_COLOR_A, INCREASE_CURSOR_X, INCREASE_CURSOR_Y,
       INCREASE_TEXTCOLOR, INCREASE_TEXTSIZE, "+");
     makeBtn(BACK_X, BACK_Y, BACK_W, BACK_H, BACK_COLOR, BACK_CURSOR_X, BACK_CURSOR_Y, ILI9341_WHITE, 3, "BACK");
-    //makeBtn(START_X,START_Y,START_W,START_H,START_COLOR_A,START_CURSOR_X,START_CURSOR_Y,START_TEXTCOLOR_A,2,"START");
+
+    // EEPROM から保存されている INTERVAL（アドレス0） をロード
     EEPROM.get(0, interval);
     intervalPrint(interval);
   }
@@ -311,7 +316,6 @@ void mode(String a)
   else if (a == "CountDown")
   {
     tft.fillRect(20, 20, 280, 200, ILI9341_WHITE);
-    //makeBtn(close_X,close_Y,close_W,close_H,ILI9341_BLACK,15,11,ILI9341_WHITE,2,"x");
     makeTextBox(50, CD_CURSOR_Y, ILI9341_BLACK, 3, "Timer:");
     makeTextBox(CD_CURSOR_X, CD_CURSOR_Y, ILI9341_BLACK, 3, (String)Record);
     makeTextBox(50, CD_CURSOR_Y + 40, ILI9341_BLACK, 2, "Stand-by");
@@ -347,7 +351,6 @@ void setup(void)
   else {
     Serial.println("Touchscreen started.");
   }
-  // origin = left,top landscape (USB left upper)
   tft.setRotation(1);
   pinMode(inPin, INPUT);
   pinMode(outPin, OUTPUT);
@@ -360,8 +363,6 @@ void setup(void)
 
 void loop()
 {
-  //digitalWrite(outPin, HIGH);
-  //digitalWrite(revPin, HIGH);
   digitalWrite(AWO, LOW);
   digitalWrite(MO, LOW);
 
@@ -381,7 +382,6 @@ void loop()
     }
     else if (flag == 3)
     {
-      // standby01();
       flag = 0;
     }
     if (flag == 5)
@@ -401,7 +401,6 @@ void loop()
       mode(menu = "Auto");
     }
   }
-
 
   // See if there's any  touch data for us
   if (ts.touched())
